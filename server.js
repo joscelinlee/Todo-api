@@ -1,21 +1,11 @@
 var express = require('express');
+var bodyParser = require('body-parser');// new middleware
 var app = express();
 var PORT = process.env.PORT || 3000;
+var todos = [];
+var todoNextId = 1; // elminate this when we used database. To keep track locally.
 
-// todos is a model. Collection consists of many models. A model is just one unit.
-var todos = [{
-	id: 1,
-	description: 'Meet mom for lunch',
-	completed: false
-}, {
-	id: 2,
-	description: 'Go to market',
-	completed: false
-}, {
-	id: 3,
-	description: 'Feed the cat',
-	completed: true
-}];
+app.use(bodyParser.json()); // set up middleware
 
 app.get('/', function(req, res) {
 	res.send('Todo API Root');
@@ -43,7 +33,22 @@ app.get('/todos/:id', function(req, res) {
 		res.status(404).send(); // call this if there is no match
 	}
 
-	//res.send('Asking for todo with id of ' + req.params.id); // params is short for url parameters (e.g. :id);
+	// res.send('Asking for todo with id of ' + req.params.id); // params is short for url parameters (e.g. :id);
+});
+
+// POST different from GET as POST can take data. POST /todos
+app.post('/todos', function(req, res) {
+	var body = req.body;
+
+	// add id field. 
+	body.id = todoNextId;
+	todoNextId++;
+
+	// push body into array
+	todos.push(body);
+	// console.log('description: ' + body.description);
+
+	res.json(body);
 });
 
 app.listen(PORT, function() {
