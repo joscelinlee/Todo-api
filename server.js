@@ -56,14 +56,45 @@ app.post('/todos', function(req, res) {
 // DELETE is a http method. DELETE /todos/:id
 app.delete('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10); // req.params.id is a string, hence convert string to int
-	var matchedTodo = _.findWhere(todos, {id: todoID});
-	
+	var matchedTodo = _.findWhere(todos, {id: todoID}); // return json
+	 
 	if (!matchedTodo) {
 		res.status(404).json({"error": "no todo found with that id"});
 	} else {
 		todos = _.without(todos, matchedTodo);
 		res.json(matchedTodo); // by default the json method sets a http status of 200
 	}
+});
+
+// PUT is a http method. PUT /todos/:id
+app.put('/todos/:id', function(req, res) {
+	var todoID = parseInt(req.params.id, 10); 
+	var matchedTodo = _.findWhere(todos, {id: todoID}); 
+	var body = _.pick(req.body, 'description', 'completed'); // returns json
+	var validAttributes = {}; // an object that stores values that we want to update
+
+	if (!matchedTodo) {
+		return res.status(404).send(); // 'return' will exit this function and the code below won't run
+	}
+
+	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) { // 'hasOwnProperty' checks that property 'completed' exists. If it has the the property 'completed' and validate if the property is a boolean.
+		validAttributes.completed = body.completed;
+	} else if (body.hasOwnProperty('completed')) { // property exists but not boolean
+		return res.status(400).send();
+	} else {
+		// Never provided attributes, no problem here
+	}
+
+	if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
+		validAttributes.description = body.description;
+	} else if (body.hasOwnProperty('description')) {
+		return res.status(400).send();
+	}
+
+	// Pass validation check and now updating functions go here
+	// matchedTodo = _.extend(matchedTodo, validAttributes); // First (destination) argument is the original destination object. Second (source) argument is the object you want to use to overwrite the properties.
+	_.extend(matchedTodo, validAttributes);
+	res.json(matchedTodo); // automatically sends status 200
 });
 
 app.listen(PORT, function() {
