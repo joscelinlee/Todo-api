@@ -1,8 +1,22 @@
 var Sequelize = require('sequelize');
-var sequelize = new Sequelize(undefined, undefined, undefined, { 
-	'dialect': 'sqlite',
-	'storage': __dirname + '/data/dev-todo-api.sqlite'
-}); // A variable that stores an instance of Sequelize. An instance is a creation out of a blueprint.
+var env = process.env.NODE_ENV || 'development';
+var sequelize; 
+
+if (env === 'production') { // Only true if is running on heroku. Connect to postgres database on heroku.
+	sequelize = new Sequelize(process.env.DATABASE_URL, {
+		dialect: 'postgres'
+	});
+} else { // Runs when not on production
+	sequelize = new Sequelize(undefined, undefined, undefined, { 
+		'dialect': 'sqlite',
+		'storage': __dirname + '/data/dev-todo-api.sqlite'
+	});
+}
+
+// var sequelize = new Sequelize(undefined, undefined, undefined, { 
+// 	'dialect': 'sqlite',
+// 	'storage': __dirname + '/data/dev-todo-api.sqlite'
+// }); // A variable that stores an instance of Sequelize. An instance is a creation out of a blueprint.
 
 var db = {}; // create a new object called db. 
 
