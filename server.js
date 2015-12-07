@@ -42,17 +42,27 @@ app.get('/todos', function(req, res) {
 // GET /todos/:id --> /todos/2
 app.get('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10); // req.params.id is a string, hence convert string to int
-	var matchedTodo = _.findWhere(todos, {
-		id: todoID
+	db.todo.findById(todoID).then(function(todo) {
+		if (!!todo) { // Convert a non-boolean variable (can be object) to its truety version.
+			res.json(todo.toJSON());
+		} else {
+			res.status(404).send();
+		}
+	}, function (e) {
+		res.status(500).send();
 	});
 
-	if (matchedTodo) {
-		res.json(matchedTodo); // send back json data
-	} else {
-		res.status(404).send(); // call this if there is no match
-	}
+	// var matchedTodo = _.findWhere(todos, {
+	// 	id: todoID
+	// });
 
-	// res.send('Asking for todo with id of ' + req.params.id); // params is short for url parameters (e.g. :id);
+	// if (matchedTodo) {
+	// 	res.json(matchedTodo); // send back json data
+	// } else {
+	// 	res.status(404).send(); // call this if there is no match
+	// }
+
+	// // res.send('Asking for todo with id of ' + req.params.id); // params is short for url parameters (e.g. :id);
 });
 
 // POST different from GET as POST can take data. POST /todos
