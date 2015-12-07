@@ -1,5 +1,5 @@
 var express = require('express');
-var bodyParser = require('body-parser');// new middleware
+var bodyParser = require('body-parser'); // new middleware
 var _ = require('underscore');
 
 var app = express();
@@ -19,9 +19,13 @@ app.get('/todos', function(req, res) {
 	var filteredTodos = todos;
 
 	if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
-		filteredTodos = _.where(filteredTodos,{completed: true});
+		filteredTodos = _.where(filteredTodos, {
+			completed: true
+		});
 	} else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
-		filteredTodos = _.where(filteredTodos,{completed: false});
+		filteredTodos = _.where(filteredTodos, {
+			completed: false
+		});
 	}
 
 	if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
@@ -37,7 +41,9 @@ app.get('/todos', function(req, res) {
 // GET /todos/:id --> /todos/2
 app.get('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10); // req.params.id is a string, hence convert string to int
-	var matchedTodo = _.findWhere(todos, {id: todoID});
+	var matchedTodo = _.findWhere(todos, {
+		id: todoID
+	});
 
 	if (matchedTodo) {
 		res.json(matchedTodo); // send back json data
@@ -51,8 +57,8 @@ app.get('/todos/:id', function(req, res) {
 // POST different from GET as POST can take data. POST /todos
 app.post('/todos', function(req, res) {
 	//var body = req.body;
-	var body = _.pick(req.body, 'description', 'completed');// the second argument and onwards are things provided by user that we want to keep
-	
+	var body = _.pick(req.body, 'description', 'completed'); // the second argument and onwards are things provided by user that we want to keep
+
 	if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) { // if body.completed is not a boolean OR body.description is not a string OR string is nothing but spaces OR string is simply empty string. Trim removes spaces before and after the string.
 		return res.status(400).send(); // bad data or some data not provided
 	}
@@ -73,10 +79,14 @@ app.post('/todos', function(req, res) {
 // DELETE is a http method. DELETE /todos/:id
 app.delete('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10); // req.params.id is a string, hence convert string to int
-	var matchedTodo = _.findWhere(todos, {id: todoID}); // return json
-	 
+	var matchedTodo = _.findWhere(todos, {
+		id: todoID
+	}); // return json
+
 	if (!matchedTodo) {
-		res.status(404).json({"error": "no todo found with that id"});
+		res.status(404).json({
+			"error": "no todo found with that id"
+		});
 	} else {
 		todos = _.without(todos, matchedTodo);
 		res.json(matchedTodo); // by default the json method sets a http status of 200
@@ -85,8 +95,10 @@ app.delete('/todos/:id', function(req, res) {
 
 // PUT is a http method. PUT /todos/:id
 app.put('/todos/:id', function(req, res) {
-	var todoID = parseInt(req.params.id, 10); 
-	var matchedTodo = _.findWhere(todos, {id: todoID}); 
+	var todoID = parseInt(req.params.id, 10);
+	var matchedTodo = _.findWhere(todos, {
+		id: todoID
+	});
 	var body = _.pick(req.body, 'description', 'completed'); // returns json
 	var validAttributes = {}; // an object that stores values that we want to update
 
