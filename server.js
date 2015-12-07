@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser'); // new middleware
 var _ = require('underscore');
+var db = require('./db.js'); // access to databse
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -59,21 +60,27 @@ app.post('/todos', function(req, res) {
 	//var body = req.body;
 	var body = _.pick(req.body, 'description', 'completed'); // the second argument and onwards are things provided by user that we want to keep
 
-	if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) { // if body.completed is not a boolean OR body.description is not a string OR string is nothing but spaces OR string is simply empty string. Trim removes spaces before and after the string.
-		return res.status(400).send(); // bad data or some data not provided
-	}
+	db.todo.create(body).then(function(todo) {
+		res.json(todo.toJSON()); // 'todo' is an object, which contains alot of sequlize methods on it. Need to convert to json first.
+	}, function(e) {
+		res.status(400).json(e);
+	});
 
-	body.description = body.description.trim(); // Get rid of any spaces before and after
+	// if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) { // if body.completed is not a boolean OR body.description is not a string OR string is nothing but spaces OR string is simply empty string. Trim removes spaces before and after the string.
+	// 	return res.status(400).send(); // bad data or some data not provided
+	// }
 
-	// add id field. 
-	body.id = todoNextId;
-	todoNextId++;
+	// body.description = body.description.trim(); // Get rid of any spaces before and after
 
-	// push body into array
-	todos.push(body);
-	// console.log('description: ' + body.description);
+	// // add id field. 
+	// body.id = todoNextId;
+	// todoNextId++;
 
-	res.json(body);
+	// // push body into array
+	// todos.push(body);
+	// // console.log('description: ' + body.description);
+
+	// res.json(body);
 });
 
 // DELETE is a http method. DELETE /todos/:id
@@ -126,6 +133,9 @@ app.put('/todos/:id', function(req, res) {
 	res.json(matchedTodo); // automatically sends status 200
 });
 
-app.listen(PORT, function() {
-	console.log('Express listening on port ' + PORT + '!');
+db.sequelize.sync().then(function() {
+	app.listen(PORT, function() {
+		console.log('Express listening on port ' + PORT + '!');
+	});
 });
+
