@@ -1,5 +1,5 @@
 var Sequelize = require('sequelize');
-var env = process.env.NODE_ENV || 'development';
+var env = process.env.NODE_ENV || 'development'; // process.env is an object that has key-value pair
 var sequelize; 
 
 if (env === 'production') { // Only true if is running on heroku. Connect to postgres database on heroku.

@@ -117,18 +117,35 @@ app.post('/todos', function(req, res) {
 // DELETE is a http method. DELETE /todos/:id
 app.delete('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10); // req.params.id is a string, hence convert string to int
-	var matchedTodo = _.findWhere(todos, {
-		id: todoID
-	}); // return json
+	
+	db.todo.destroy({ // If number is zero so assume id didn't exist.
+		where: {
+			id: todoID
+		}
+	}).then(function(rowsDeleted) {
+		if (rowsDeleted === 0) {
+			res.status(404).json({
+				error: 'No todo with id'
+			});
+		} else {
+			res.status(204).send(); 
+		}
+	},function() {
+		res.status(500).send();
+	});
 
-	if (!matchedTodo) {
-		res.status(404).json({
-			"error": "no todo found with that id"
-		});
-	} else {
-		todos = _.without(todos, matchedTodo);
-		res.json(matchedTodo); // by default the json method sets a http status of 200
-	}
+	// var matchedTodo = _.findWhere(todos, {
+	// 	id: todoID
+	// }); // return json
+
+	// if (!matchedTodo) {
+	// 	res.status(404).json({
+	// 		"error": "no todo found with that id"
+	// 	});
+	// } else {
+	// 	todos = _.without(todos, matchedTodo);
+	// 	res.json(matchedTodo); // by default the json method sets a http status of 200
+	// }
 });
 
 // PUT is a http method. PUT /todos/:id
