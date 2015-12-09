@@ -149,36 +149,33 @@ app.delete('/todos/:id', function(req, res) {
 });
 
 // PUT is a http method. PUT /todos/:id
+// The above uses model methods. This uses instance methods, which execute on existing, already fetched model. Find a model with that id and when get instance back then call a method on it. 
 app.put('/todos/:id', function(req, res) {
 	var todoID = parseInt(req.params.id, 10);
-	var matchedTodo = _.findWhere(todos, {
-		id: todoID
-	});
 	var body = _.pick(req.body, 'description', 'completed'); // returns json
-	var validAttributes = {}; // an object that stores values that we want to update
+	var attributes = {}; // an object that stores values that we want to update
 
-	if (!matchedTodo) {
-		return res.status(404).send(); // 'return' will exit this function and the code below won't run
-	}
+	if (body.hasOwnProperty('completed')) { // 'hasOwnProperty' checks that property 'completed' exists. If it has the the property 'completed' and validate if the property is a boolean.
+		attributes.completed = body.completed;
+	} 
 
-	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) { // 'hasOwnProperty' checks that property 'completed' exists. If it has the the property 'completed' and validate if the property is a boolean.
-		validAttributes.completed = body.completed;
-	} else if (body.hasOwnProperty('completed')) { // property exists but not boolean
-		return res.status(400).send();
-	} else {
-		// Never provided attributes, no problem here
-	}
+	if (body.hasOwnProperty('description')) {
+		attributes.description = body.description;
+	} 
 
-	if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
-		validAttributes.description = body.description;
-	} else if (body.hasOwnProperty('description')) {
-		return res.status(400).send();
-	}
-
-	// Pass validation check and now updating functions go here
-	// matchedTodo = _.extend(matchedTodo, validAttributes); // First (destination) argument is the original destination object. Second (source) argument is the object you want to use to overwrite the properties.
-	_.extend(matchedTodo, validAttributes);
-	res.json(matchedTodo); // automatically sends status 200
+	db.todo.findById(todoID).then(function(todo) { // if findById() passes
+		if (todo) {
+			todo.update(attributes).then(function(todo) { // if todo.update() passes
+				res.json(todo.toJSON());
+			}, function(e) {
+				res.status(400).json(e); // if todo.update() fails
+			}); // keep moving the promise chain
+		} else {
+			res.status(404).send(); // resource is not found
+		}
+	}, function() { // if findById() fails
+		res.status(500).send(); 
+	});
 });
 
 db.sequelize.sync().then(function() {
