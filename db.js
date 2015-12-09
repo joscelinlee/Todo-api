@@ -21,6 +21,7 @@ if (env === 'production') { // Only true if is running on heroku. Connect to pos
 var db = {}; // create a new object called db. 
 
 db.todo = sequelize.import(__dirname + '/models/todo.js'); // Load sequelize model from separate file. 'todo' property of 'db' object
+db.user = sequelize.import(__dirname + '/models/user.js');
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
