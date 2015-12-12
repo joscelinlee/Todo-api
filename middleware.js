@@ -6,7 +6,7 @@ module.exports = function(db) { // db is the database
 			var token = req.get('Auth');
 
 			db.user.findByToken(token).then(function(user) { // 'findByToken' is a custom method
-				req.user = user;
+				req.user = user; // 'req.user' can access the sequelize instance
 				next(); // continue to private code
 			}, function(e) {
 				res.status(401).send();

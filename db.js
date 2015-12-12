@@ -25,4 +25,8 @@ db.user = sequelize.import(__dirname + '/models/user.js');
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
+// associations
+db.todo.belongsTo(db.user);
+db.user.hasMany(db.todo);
+
 module.exports = db; // Set it to object to return multiple things from a file. Export db object, which has todo model, sequelize instance and Sequelize library.

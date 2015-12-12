@@ -94,7 +94,11 @@ app.post('/todos', middleware.requireAuthentication, function(req, res) {
 	var body = _.pick(req.body, 'description', 'completed'); // the second argument and onwards are things provided by user that we want to keep
 
 	db.todo.create(body).then(function(todo) {
-		res.json(todo.toJSON()); // 'todo' is an object, which contains alot of sequlize methods on it. Need to convert to json first.
+		req.user.addTodo(todo).then(function() {
+			return todo.reload(); // to keep the chain alive
+		}).then(function(todo) {
+			res.json(todo.toJSON()); // 'todo' is an object, which contains alot of sequlize methods on it. Need to convert to json first.
+		});
 	}, function(e) {
 		res.status(400).json(e);
 	});
