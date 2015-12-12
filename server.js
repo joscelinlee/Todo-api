@@ -19,7 +19,9 @@ app.get('/', function(req, res) {
 // GET /todos?completed=true&q=house --> return description that has 'house'
 app.get('/todos', middleware.requireAuthentication, function(req, res) {
 	var query = req.query;
-	var where = {};
+	var where = {
+		userId: req.user.get('id')
+	}; 
 
 	if (query.hasOwnProperty('completed') && query.completed === 'true') {
 		where.completed = true;
@@ -65,7 +67,12 @@ app.get('/todos', middleware.requireAuthentication, function(req, res) {
 // GET /todos/:id --> /todos/2
 app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoID = parseInt(req.params.id, 10); // req.params.id is a string, hence convert string to int
-	db.todo.findById(todoID).then(function(todo) {
+	db.todo.findOne({
+		where: {
+			id: todoID,
+			userId: req.user.get('id')
+		}
+	}).then(function(todo) {
 		if (!!todo) { // Convert a non-boolean variable (can be object) to its truety version.
 			res.json(todo.toJSON());
 		} else {
@@ -126,7 +133,8 @@ app.delete('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	
 	db.todo.destroy({ // If number is zero so assume id didn't exist.
 		where: {
-			id: todoID
+			id: todoID,
+			userId: req.user.get('id')
 		}
 	}).then(function(rowsDeleted) {
 		if (rowsDeleted === 0) {
@@ -169,7 +177,12 @@ app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
 		attributes.description = body.description;
 	} 
 
-	db.todo.findById(todoID).then(function(todo) { // if findById() passes
+	db.todo.findOne({
+		where: {
+			id: todoID,
+			userId: req.user.get('id')
+		}
+	}).then(function(todo) { // if findById() passes
 		if (todo) {
 			todo.update(attributes).then(function(todo) { // if todo.update() passes
 				res.json(todo.toJSON());
