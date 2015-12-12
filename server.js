@@ -210,20 +210,36 @@ app.post('/users', function(req, res) {
 // POST /users/login (acting on users resource)
 app.post('/users/login', function(req, res) {
 	var body = _.pick(req.body, 'email', 'password');
-
+	var userInstance;
 	// create a method on user model
 	// create a class method. 'authenticate' is a custom method, not built in in sequelize.
 	db.user.authenticate(body).then(function(user) { // 'authenticate' returns a promise. If authentication went well, get user back.
 		var token = user.generateToken('authentication'); // chance that it return undefined
+		userInstance = user;
 
-		if (token) { // check if token is defined
-			res.header('Auth', token).json(user.toPublicJSON()); // first argument is key, second argument is the value
-		} else {
-			res.status(401).send();
-		}
+		return db.token.create({
+			token: token // token is converted to tokenHash and tokenHash will then be saved
+		});
 
-	}, function(e) {
+		// if (token) { // check if token is defined
+		// 	res.header('Auth', token).json(user.toPublicJSON()); // first argument is key, second argument is the value
+		// } else {
+		// 	res.status(401).send();
+		// }
+
+	}).then(function(tokenInstance) {
+		res.header('Auth', tokenInstance.get('token')).json(userInstance.toPublicJSON()); // first argument is key, second argument is the value
+	}).catch(function() {
 		res.status(401).send();
+	});
+});
+
+// DELETE /users/login = logout
+app.delete('/users/login', middleware.requireAuthentication, function(req, res) {
+	req.token.destroy().then(function() {
+		res.status(204).send();
+	}).catch(function() {
+		res.status(500).send();
 	});
 });
 
