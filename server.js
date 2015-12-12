@@ -3,6 +3,7 @@ var bodyParser = require('body-parser'); // new middleware
 var _ = require('underscore');
 var db = require('./db.js'); // access to databse
 var bcrypt = require('bcrypt');
+var middleware = require('./middleware.js')(db);
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -16,7 +17,7 @@ app.get('/', function(req, res) {
 });
 
 // GET /todos?completed=true&q=house --> return description that has 'house'
-app.get('/todos', function(req, res) {
+app.get('/todos', middleware.requireAuthentication, function(req, res) {
 	var query = req.query;
 	var where = {};
 
@@ -62,7 +63,7 @@ app.get('/todos', function(req, res) {
 });
 
 // GET /todos/:id --> /todos/2
-app.get('/todos/:id', function(req, res) {
+app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoID = parseInt(req.params.id, 10); // req.params.id is a string, hence convert string to int
 	db.todo.findById(todoID).then(function(todo) {
 		if (!!todo) { // Convert a non-boolean variable (can be object) to its truety version.
@@ -88,7 +89,7 @@ app.get('/todos/:id', function(req, res) {
 });
 
 // POST different from GET as POST can take data. POST /todos
-app.post('/todos', function(req, res) {
+app.post('/todos', middleware.requireAuthentication, function(req, res) {
 	//var body = req.body;
 	var body = _.pick(req.body, 'description', 'completed'); // the second argument and onwards are things provided by user that we want to keep
 
@@ -116,7 +117,7 @@ app.post('/todos', function(req, res) {
 });
 
 // DELETE is a http method. DELETE /todos/:id
-app.delete('/todos/:id', function(req, res) {
+app.delete('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoID = parseInt(req.params.id, 10); // req.params.id is a string, hence convert string to int
 	
 	db.todo.destroy({ // If number is zero so assume id didn't exist.
@@ -151,7 +152,7 @@ app.delete('/todos/:id', function(req, res) {
 
 // PUT is a http method. PUT /todos/:id
 // The above uses model methods. This uses instance methods, which execute on existing, already fetched model. Find a model with that id and when get instance back then call a method on it. 
-app.put('/todos/:id', function(req, res) {
+app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoID = parseInt(req.params.id, 10);
 	var body = _.pick(req.body, 'description', 'completed'); // returns json
 	var attributes = {}; // an object that stores values that we want to update
@@ -198,7 +199,7 @@ app.post('/users/login', function(req, res) {
 	db.user.authenticate(body).then(function(user) { // 'authenticate' returns a promise. If authentication went well, get user back.
 		var token = user.generateToken('authentication'); // chance that it return undefined
 
-		if (token) {
+		if (token) { // check if token is defined
 			res.header('Auth', token).json(user.toPublicJSON()); // first argument is key, second argument is the value
 		} else {
 			res.status(401).send();

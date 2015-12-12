@@ -63,6 +63,29 @@ module.exports = function(sequelize, DataTypes) {
 						reject();
 					});
 				});
+			},
+			findByToken: function (token) {
+				return new Promise(function(resolve, reject) {
+					// Step 1: decode token
+					// Step 2: decrypt data
+					try {
+						var decodedJWT = jwt.verify(token, 'qwerty098'); // call to verify that token has not been modified and is indeed valid
+						var bytes = cryptojs.AES.decrypt(decodedJWT.token, 'abc123!@#!');
+						var tokenData = JSON.parse(bytes.toString(cryptojs.enc.Utf8)); // takes json string to convert to real javascript object
+
+						user.findById(tokenData.id).then(function(user) {
+							if (user) {
+								resolve(user);
+							} else {
+								reject(); // id doesn't exist in database
+							}
+						}, function(e) {
+							reject(); // database is not properly connected
+						}); // 'findById' is a bulit-in function
+					} catch(e) {
+						reject(); // token is not in a valid format
+					}
+				});
 			}
 		},
 		instanceMethods: { // acting on existing user object
@@ -77,7 +100,8 @@ module.exports = function(sequelize, DataTypes) {
 				}
 
 				try {
-					// take the user data and encrypt them
+					// Step 1: take the user data and encrypt them
+					// Step 2: create a new token
 					var stringData = JSON.stringify({id: this.get('id'), type: type}); // take user's data and turn it into a json string as AES can only encrypt json string
 					var encryptedData = cryptojs.AES.encrypt(stringData, 'abc123!@#!').toString(); // second argument is the secret password 
 					var token = jwt.sign({
