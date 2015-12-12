@@ -2,6 +2,7 @@ var express = require('express');
 var bodyParser = require('body-parser'); // new middleware
 var _ = require('underscore');
 var db = require('./db.js'); // access to databse
+var bcrypt = require('bcrypt');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -188,7 +189,20 @@ app.post('/users', function(req, res) {
 	});
 });
 
-db.sequelize.sync().then(function() {
+// POST /users/login (acting on users resource)
+app.post('/users/login', function(req, res) {
+	var body = _.pick(req.body, 'email', 'password');
+
+	// create a method on user model
+	// create a class method. 'authenticate' is a custom method, not built in in sequelize.
+	db.user.authenticate(body).then(function(user) { // 'authenticate' returns a promise. If authentication went well, get user back.
+		res.json(user.toPublicJSON());
+	}, function(e) {
+		res.status(401).send();
+	});
+});
+
+db.sequelize.sync({force: true}).then(function() {
 	app.listen(PORT, function() {
 		console.log('Express listening on port ' + PORT + '!');
 	});
