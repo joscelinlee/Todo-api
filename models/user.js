@@ -1,5 +1,7 @@
 var bcrypt = require('bcrypt'); // specify module name
 var _ = require('underscore');
+var cryptojs = require('crypto-js');
+var jwt = require('jsonwebtoken');
 
 module.exports = function(sequelize, DataTypes) {
 	var user = sequelize.define('user', {
@@ -63,10 +65,30 @@ module.exports = function(sequelize, DataTypes) {
 				});
 			}
 		},
-		instanceMethods: {
+		instanceMethods: { // acting on existing user object
 			toPublicJSON: function() {
 				var json = this.toJSON(); // to get the json object
 				return _.pick(json, 'id', 'email', 'createdAt', 'updatedAt'); // pick items from json object (first argument) to be displayed on postman
+			},
+			generateToken: function(type) { // type of token
+				// create a token that encrypts data
+				if (!_.isString(type)) {
+					return undefined;
+				}
+
+				try {
+					// take the user data and encrypt them
+					var stringData = JSON.stringify({id: this.get('id'), type: type}); // take user's data and turn it into a json string as AES can only encrypt json string
+					var encryptedData = cryptojs.AES.encrypt(stringData, 'abc123!@#!').toString(); // second argument is the secret password 
+					var token = jwt.sign({
+						token: encryptedData // pulled out the token properties (which we have the encryptedData), decrypt it and find the user by their id
+					}, 'qwerty098'); // second argument is the jwt password
+
+					return token;
+				} catch(e) {
+					console.error(e);
+					return undefined;
+				}
 			}
 		}
 	});

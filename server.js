@@ -196,7 +196,14 @@ app.post('/users/login', function(req, res) {
 	// create a method on user model
 	// create a class method. 'authenticate' is a custom method, not built in in sequelize.
 	db.user.authenticate(body).then(function(user) { // 'authenticate' returns a promise. If authentication went well, get user back.
-		res.json(user.toPublicJSON());
+		var token = user.generateToken('authentication'); // chance that it return undefined
+
+		if (token) {
+			res.header('Auth', token).json(user.toPublicJSON()); // first argument is key, second argument is the value
+		} else {
+			res.status(401).send();
+		}
+
 	}, function(e) {
 		res.status(401).send();
 	});
